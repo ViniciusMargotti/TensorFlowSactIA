@@ -1,105 +1,107 @@
-import './App.css';
-import {useEffect, useRef} from "react";
-import "@tensorflow/tfjs";
-import "./styles.css";
-
-const cocoSsd = require('@tensorflow-models/coco-ssd');
+import { useState, useEffect, useRef } from 'react';
+import * as mobilenet from "@tensorflow-models/mobilenet";
 
 function App() {
+    const [isModelLoading, setIsModelLoading] = useState(false)
+    const [model, setModel] = useState(null)
+    const [imageURL, setImageURL] = useState(null);
+    const [results, setResults] = useState([])
+    const [history, setHistory] = useState([])
 
-    const videoRef = useRef();
-    const canvasRef = useRef();
+    const imageRef = useRef()
+    const textInputRef = useRef()
+    const fileInputRef = useRef()
+
+    const loadModel = async () => {
+        setIsModelLoading(true)
+        try {
+            const model = await mobilenet.load()
+            setModel(model)
+            setIsModelLoading(false)
+        } catch (error) {
+            console.log(error)
+            setIsModelLoading(false)
+        }
+    }
+
+    const uploadImage = (e) => {
+        const { files } = e.target
+        if (files.length > 0) {
+            const url = URL.createObjectURL(files[0])
+            setImageURL(url)
+        } else {
+            setImageURL(null)
+        }
+    }
+
+    const identify = async () => {
+        textInputRef.current.value = ''
+        const results = await model.classify(imageRef.current)
+        setResults(results)
+    }
+
+    const handleOnChange = (e) => {
+        setImageURL(e.target.value)
+        setResults([])
+    }
+
+    const triggerUpload = () => {
+        fileInputRef.current.click()
+    }
 
     useEffect(() => {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            const webCamPromise = navigator.mediaDevices
-                .getUserMedia({
-                    audio: false,
-                    video: {
-                        facingMode: "user"
-                    }
-                })
-                .then(stream => {
-                    window.stream = stream;
-                    videoRef.current.srcObject = stream;
-                    return new Promise((resolve, reject) => {
-                        videoRef.current.onloadedmetadata = () => {
-                            resolve();
-                        };
-                    });
-                });
-            const modelPromise = cocoSsd.load();
-            Promise.all([modelPromise, webCamPromise])
-                .then(values => {
-                    detectFrame(videoRef.current, values[0]);
-                })
-                .catch(error => {
-                    console.error(error);
-                });
-        }
+        loadModel()
     }, [])
 
-    const detectFrame = (video, model) => {
-        model.detect(video).then(predictions => {
-            renderPredictions(predictions);
-            requestAnimationFrame(() => {
-                detectFrame(video, model);
-            });
-        });
-    };
+    useEffect(() => {
+        if (imageURL) {
+            setHistory([imageURL, ...history])
+        }
+    }, [imageURL])
 
-    const renderPredictions = predictions => {
-        const ctx = canvasRef.current.getContext("2d");
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        // Font options.
-        const font = "16px sans-serif";
-        ctx.font = font;
-        ctx.textBaseline = "top";
-        predictions.forEach(prediction => {
-            const x = prediction.bbox[0];
-            const y = prediction.bbox[1];
-            const width = prediction.bbox[2];
-            const height = prediction.bbox[3];
-            // Draw the bounding box.
-            ctx.strokeStyle = "#00FFFF";
-            ctx.lineWidth = 4;
-            ctx.strokeRect(x, y, width, height);
-            // Draw the label background.
-            ctx.fillStyle = "#00FFFF";
-            const textWidth = ctx.measureText(prediction.class).width;
-            const textHeight = parseInt(font, 10); // base 10
-            ctx.fillRect(x, y, textWidth + 4, textHeight + 4);
-        });
-
-        predictions.forEach(prediction => {
-            const x = prediction.bbox[0];
-            const y = prediction.bbox[1];
-            // Draw the text last to ensure it's on top.
-            ctx.fillStyle = "#000000";
-            ctx.fillText(prediction.class, x, y);
-        });
-    };
-
+    if (isModelLoading) {
+        return <h2>Model Loading...</h2>
+    }
 
     return (
         <div className="App">
-            <div>
-                <video
-                    className="size"
-                    autoPlay
-                    playsInline
-                    muted
-                    ref={videoRef}
-                    width="600"
-                    height="500"
-                />
-                <canvas
-                    className="size"
-                    ref={canvasRef}
-                    width="600"
-                    height="500"
-                />
+            <h1 className='header'>Image Identification</h1>
+            <div className='inputHolder'>
+                <input type='file' accept='image/*' capture='camera' className='uploadInput' onChange={uploadImage} ref={fileInputRef} />
+                <button className='uploadImage' onClick={triggerUpload}>Upload Image</button>
+                <span className='or'>OR</span>
+                <input type="text" placeholder='Paster image URL' ref={textInputRef} onChange={handleOnChange} />
             </div>
+            <div className="mainWrapper">
+                <div className="mainContent">
+                    <div className="imageHolder">
+                        {imageURL && <img src={imageURL} alt="Upload Preview" crossOrigin="anonymous" ref={imageRef} />}
+                    </div>
+                    {results.length > 0 && <div className='resultsHolder'>
+                        {results.map((result, index) => {
+                            return (
+                                <div className='result' key={result.className}>
+                                    <span className='name'>{result.className}</span>
+                                    <span className='confidence'>Confidence level: {(result.probability * 100).toFixed(2)}% {index === 0 && <span className='bestGuess'>Best Guess</span>}</span>
+                                </div>
+                            )
+                        })}
+                    </div>}
+                </div>
+                {imageURL && <button className='button' onClick={identify}>Identify Image</button>}
+            </div>
+            {history.length > 0 && <div className="recentPredictions">
+                <h2>Recent Images</h2>
+                <div className="recentImages">
+                    {history.map((image, index) => {
+                        return (
+                            <div className="recentPrediction" key={`${image}${index}`}>
+                                <img src={image} alt='Recent Prediction' onClick={() => setImageURL(image)} />
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>}
         </div>
     );
 }
