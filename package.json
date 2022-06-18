@@ -4,7 +4,7 @@
     "version": "0.1.0",
     "private": true,
     "engines": {
-        "node": " 6.2.0"
+        "node": "11.0.0"
     },
     "dependencies": {
         "@tensorflow-models/mobilenet": "^2.0.4",
