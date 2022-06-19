@@ -25,7 +25,7 @@ function App() {
     }
 
     const uploadImage = (e) => {
-        const { files } = e.target
+        const {files} = e.target
         if (files.length > 0) {
             const url = URL.createObjectURL(files[0])
             setImageURL(url)
@@ -60,17 +60,18 @@ function App() {
     }, [imageURL])
 
     if (isModelLoading) {
-        return <h2>Model Loading...</h2>
+        return <h2>Cerregando modelo TensorFlow.js...</h2>
     }
 
     return (
         <div className="App">
-            <h1 className='header'>Image Identification</h1>
+            <h1 className='header'>Classificador de imagens SATC</h1>
             <div className='inputHolder'>
+                <span style={{marginRight: 10}}>Anexe suas imagens para classificá-las </span>
                 <input type='file' accept='image/*' capture='camera' className='uploadInput' onChange={uploadImage} ref={fileInputRef} />
-                <button className='uploadImage' onClick={triggerUpload}>Upload Image</button>
-                <span className='or'>OR</span>
-                <input type="text" placeholder='Paster image URL' ref={textInputRef} onChange={handleOnChange} />
+                <button className='uploadImage' onClick={triggerUpload}>Anexar imagem</button>
+                <span style={{display: 'none'}} className='or'>OR</span>
+                <input type="text" style={{display: 'none'}} placeholder='Paster image URL' ref={textInputRef} onChange={handleOnChange} />
             </div>
             <div className="mainWrapper">
                 <div className="mainContent">
@@ -82,16 +83,16 @@ function App() {
                             return (
                                 <div className='result' key={result.className}>
                                     <span className='name'>{result.className}</span>
-                                    <span className='confidence'>Confidence level: {(result.probability * 100).toFixed(2)}% {index === 0 && <span className='bestGuess'>Best Guess</span>}</span>
+                                    <span className='confidence'>Nível de confiança: {(result.probability * 100).toFixed(2)}% {index === 0 && <span className='bestGuess'>Melhor possibilidade</span>}</span>
                                 </div>
                             )
                         })}
                     </div>}
                 </div>
-                {imageURL && <button className='button' onClick={identify}>Identify Image</button>}
+                {imageURL && <button className='button' onClick={identify}>Classificar imagem</button>}
             </div>
             {history.length > 0 && <div className="recentPredictions">
-                <h2>Recent Images</h2>
+                <h2>Imagens recentes</h2>
                 <div className="recentImages">
                     {history.map((image, index) => {
                         return (

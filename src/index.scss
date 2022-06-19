@@ -22,7 +22,7 @@ code {
     text-align: center;
     font-weight: 400;
     color: #fff;
-    background: blueviolet;
+    background: #7fbe59;
     font-size: 27px;
     padding: 5px 0;
 }
@@ -45,9 +45,9 @@ code {
     }
 }
 
-.inputHolder { 
+.inputHolder {
     padding: 0 10px;
-    display: flex; 
+    display: flex;
 
     input[type='text'] {
         max-width: 400px;
@@ -60,9 +60,9 @@ code {
         outline: none;
     }
 
-    .uploadInput { 
-        width: 0px;
-        height: 0px;
+    .uploadInput {
+        width: 0;
+        height: 0;
         visibility: hidden;
         opacity: 0;
     }
@@ -155,7 +155,7 @@ code {
 .button {
     padding: 12px 17px;
     font-size: 18px;
-    background: blueviolet;
+    background: #7fbe59;
     color: #fff;
     display: inline-block;
     border: 0;
@@ -174,7 +174,7 @@ code {
         font-size: 26px;
         margin: 10px 0;
     }
-    
+
     .recentImages {
         display: flex;
         flex-wrap: wrap;
